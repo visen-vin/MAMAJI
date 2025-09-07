@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CCP Calculator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Simple transition for a smoother UI experience */
+        .transition-all {
+            transition: all 0.3s ease-in-out;
+        }
+        /* Custom focus ring color */
+        .focus\:ring-indigo-500:focus {
+            --tw-ring-color: #6366f1;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-gray-50 to-indigo-100 flex items-center justify-center min-h-screen">
+
+    <div class="w-full max-w-md mx-auto bg-white rounded-2xl shadow-2xl p-6 sm:p-8 m-4">
+        
+        <!-- Icon/Image Section -->
+        <div class="mx-auto flex items-center justify-center h-20 w-20 rounded-full bg-indigo-100 mb-6">
+            <svg class="h-12 w-12 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.286zm0 13.036h.008v.008h-.008v-.008z" />
+            </svg>
+        </div>
+
+        <!-- Header Section -->
+        <div class="text-center mb-8">
+            <h1 id="calculatorTitle" class="text-2xl sm:text-3xl font-bold text-slate-900">CCP Calculator</h1>
+            <p class="text-slate-600 mt-2">Enter your premium to estimate your sum insured.</p>
+        </div>
+
+        <!-- Calculator Form -->
+        <form id="premiumForm" class="space-y-6">
+            
+            <!-- Premium Input -->
+            <div>
+                <label for="mainInput" id="mainInputLabel" class="block text-sm font-medium text-slate-700 mb-1">Enter Premium (including GST)</label>
+                <input type="number" id="mainInput" name="mainInput" placeholder="e.g., 5000" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all" min="1" step="1" required>
+            </div>
+            
+            <!-- Employment Type -->
+            <div>
+                <label for="employmentType" class="block text-sm font-medium text-slate-700 mb-1">Employment Type</label>
+                <select id="employmentType" name="employmentType" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all bg-white" required>
+                    <option value="" disabled selected>Select employment type</option>
+                    <option value="salaried">Salaried</option>
+                    <option value="selfEmployed">Self-Employed</option>
+                </select>
+            </div>
+
+            <!-- Age Input -->
+            <div>
+                <label for="age" class="block text-sm font-medium text-slate-700 mb-1">Age of Client</label>
+                <input type="number" id="age" name="age" placeholder="e.g., 35" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all" min="18" max="99" required>
+            </div>
+
+            <!-- Tenure Selection -->
+            <div>
+                <label for="tenure" class="block text-sm font-medium text-slate-700 mb-1">Policy Tenure</label>
+                <select id="tenure" name="tenure" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all bg-white" required>
+                    <option value="1">1 Year</option>
+                    <option value="2">2 Years</option>
+                    <option value="3">3 Years</option>
+                </select>
+            </div>
+
+            <!-- GST Input -->
+            <div>
+                <label for="gst" class="block text-sm font-medium text-slate-700 mb-1">GST (%)</label>
+                <input type="number" id="gst" name="gst" value="18" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all" min="0" step="0.1" required>
+            </div>
+
+            <!-- Calculate Button -->
+            <div>
+                <button type="submit" id="calculateBtn" class="w-full bg-gradient-to-r from-indigo-600 to-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:from-indigo-700 hover:to-blue-700 focus:outline-none focus:ring-4 focus:ring-indigo-300 transition-all transform hover:scale-105">
+                    Calculate Sum Insured
+                </button>
+            </div>
+        </form>
+
+        <!-- Result Display Area -->
+        <div id="result" class="mt-8 text-center hidden">
+            <p id="resultLabel" class="text-slate-600">Your Estimated Sum Insured is:</p>
+            <p id="premiumAmount" class="text-3xl sm:text-4xl font-bold text-indigo-600 mt-2"></p>
+            <p id="errorMessage" class="text-red-500 mt-2 font-medium"></p>
+        </div>
+         <!-- Disclaimer -->
+         <div class="mt-8 text-center text-xs text-slate-400">
+            <p>This is an illustrative calculation based on the provided rate table. The rate is applied per ₹100 of the Sum Insured. Actual sum insured may vary.</p>
+        </div>
+
+    </div>
+
+    <script>
+        // --- Data and Configuration ---
+        const salariedRates = {
+            "18-25": { "1": 0.283, "2": 0.549, "3": 0.801 },
+            "26-30": { "1": 0.314, "2": 0.611, "3": 0.891 },
+            "31-35": { "1": 0.401, "2": 0.778, "3": 1.134 },
+            "36-40": { "1": 0.509, "2": 0.987, "3": 1.443 },
+            "41-45": { "1": 1.061, "2": 2.062, "3": 3.006 },
+            "46-50": { "1": 1.94,  "2": 3.772, "3": 5.499 },
+            "51-55": { "1": 3.008, "2": 5.846, "3": 8.523 },
+            "56-60": { "1": 5.085, "2": 9.883, "3": 14.409 },
+            "61-65": { "1": 7.728, "2": 15.019,"3": 21.897 },
+            "66-68": { "1": 13.777, "2": 26.775,"3": 39.037 },
+            "69-71": { "1": 18.173, "2": 35.316,"3": 51.496 },
+            "72-74": { "1": 22.767, "2": 44.232,"3": 64.489 },
+            "75+":   { "1": 27.312, "2": 53.078,"3": 77.387 }
+        };
+
+        const selfEmployedRates = {
+            "18-25": { "1": 0.277, "2": 0.535, "3": 0.779 },
+            "26-30": { "1": 0.308, "2": 0.597, "3": 0.869 },
+            "31-35": { "1": 0.395, "2": 0.764, "3": 1.112 },
+            "36-40": { "1": 0.503, "2": 0.973, "3": 1.418 },
+            "41-45": { "1": 1.055, "2": 2.048, "3": 2.984 },
+            "46-50": { "1": 1.934, "2": 3.758, "3": 5.477 },
+            "51-55": { "1": 2.999, "2": 5.827, "3": 8.494 },
+            "56-60": { "1": 5.076, "2": 9.864, "3": 14.386 },
+            "61-65": { "1": 7.719, "2": 15.000,"3": 21.868 },
+            "66-68": { "1": 13.777, "2": 26.775,"3": 39.037 },
+            "69-71": { "1": 18.173, "2": 35.316,"3": 51.497 },
+            "72-74": { "1": 22.767, "2": 44.232,"3": 64.489 },
+            "75+":   { "1": 27.312, "2": 53.078,"3": 77.387 }
+        };
+
+        // --- DOM Elements ---
+        const form = document.getElementById('premiumForm');
+        const resultDiv = document.getElementById('result');
+        const premiumAmountEl = document.getElementById('premiumAmount');
+        const errorMessageEl = document.getElementById('errorMessage');
+        const mainInput = document.getElementById('mainInput');
+
+        // --- Event Listener ---
+        form.addEventListener('submit', function(event) {
+            event.preventDefault(); // Prevent form from submitting the traditional way
+            
+            // Clear previous results
+            premiumAmountEl.textContent = '';
+            errorMessageEl.textContent = '';
+            
+            // Get user inputs
+            const premiumInputValue = parseFloat(mainInput.value);
+            const employmentType = document.getElementById('employmentType').value;
+            const age = parseInt(document.getElementById('age').value, 10);
+            const tenure = document.getElementById('tenure').value;
+            const gst = parseFloat(document.getElementById('gst').value);
+
+            // Input validation
+            if (isNaN(premiumInputValue) || premiumInputValue <= 0 || isNaN(age) || age < 18 || !employmentType || isNaN(gst) || gst < 0) {
+                showError("Please enter valid inputs. Age must be 18+ and employment type must be selected.");
+                return;
+            }
+
+            // --- Calculation Logic ---
+            const ageBracket = getAgeBracket(age);
+
+            if (!ageBracket) {
+                showError("Age is outside the supported range for this product.");
+                return;
+            }
+            
+            const rateChart = employmentType === 'salaried' ? salariedRates : selfEmployedRates;
+            const rate = rateChart[ageBracket]?.[tenure];
+
+            if (rate === undefined) {
+                showError("A rate is not available for the selected options. Please check the tenure.");
+                return;
+            }
+            
+            // The entered premium is inclusive of GST. We need to find the base premium first.
+            const premiumWithoutGst = premiumInputValue / (1 + (gst / 100));
+
+            // Calculate the sum insured based on the base premium (rate is per 100)
+            const calculatedSumInsured = (premiumWithoutGst * 100) / rate;
+            showResult(calculatedSumInsured);
+        });
+
+        // --- Helper Functions ---
+        
+        /**
+         * Determines the correct age bracket string based on the client's age.
+         * @param {number} age - The age of the client.
+         * @returns {string|null} The age bracket key or null if not found.
+         */
+        function getAgeBracket(age) {
+            if (age >= 18 && age <= 25) return "18-25";
+            if (age >= 26 && age <= 30) return "26-30";
+            if (age >= 31 && age <= 35) return "31-35";
+            if (age >= 36 && age <= 40) return "36-40";
+            if (age >= 41 && age <= 45) return "41-45";
+            if (age >= 46 && age <= 50) return "46-50";
+            if (age >= 51 && age <= 55) return "51-55";
+            if (age >= 56 && age <= 60) return "56-60";
+            if (age >= 61 && age <= 65) return "61-65";
+            if (age >= 66 && age <= 68) return "66-68";
+            if (age >= 69 && age <= 71) return "69-71";
+            if (age >= 72 && age <= 74) return "72-74";
+            if (age >= 75) return "75+";
+            return null; // Age is out of range
+        }
+        
+        /**
+         * Displays the final calculated result.
+         * @param {number} amount - The calculated sum insured amount.
+         */
+        function showResult(amount) {
+            resultDiv.classList.remove('hidden');
+            errorMessageEl.textContent = '';
+            premiumAmountEl.textContent = formatCurrency(amount);
+        }
+
+        /**
+         * Displays an error message to the user.
+         * @param {string} message - The error message to display.
+         */
+        function showError(message) {
+            resultDiv.classList.remove('hidden');
+            premiumAmountEl.textContent = '';
+            errorMessageEl.textContent = message;
+        }
+
+        /**
+         * Formats a number as a INR currency string.
+         * @param {number} number - The number to format.
+         * @returns {string} The formatted currency string.
+         */
+        function formatCurrency(number) {
+            return new Intl.NumberFormat('en-IN', {
+                style: 'currency',
+                currency: 'INR',
+                maximumFractionDigits: 0
+            }).format(number);
+        }
+    </script>
+</body>
+</html>
+
